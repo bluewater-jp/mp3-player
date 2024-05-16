@@ -86,9 +86,17 @@ void showPlayFile(int folder, int file)
 
 void playFile()
 {
+  Serial.print(F("playFolder:"));
+  Serial.print(F(" Folder:"));
+  Serial.print(status.folder);
+  Serial.print(F(" File:"));
+  Serial.println(status.file);
   dfp.playFolder(status.folder, status.file);
+  Serial.println(F("playFolder after"));
   showPlayFile(status.folder, status.file);
   saveStatus();
+
+  delay(200);
 }
 
 void previous()
@@ -229,12 +237,15 @@ void showLoop()
   switch (status.loop)
   {
   case LOOP_ONE:
+    Serial.println(F("Loop: ONE"));
     lcd.print("ONE   ");
     break;
   case LOOP_FOLDER:
+    Serial.println(F("Loop: FOLDER"));
     lcd.print("FOLDER");
     break;
   case LOOP_ALL:
+    Serial.println(F("Loop: ALL"));
     lcd.print("ALL   ");
     break;
   default:
@@ -244,8 +255,12 @@ void showLoop()
 
 void changeLoop()
 {
+  Serial.print(F("Loop:"));
+  Serial.print(status.loop);
+  Serial.print(F(" to "));
   switch (status.loop)
   {
+  case -1:
   case LOOP_ONE:
     status.loop = LOOP_FOLDER;
     break;
@@ -258,6 +273,7 @@ void changeLoop()
   default:
     break;
   }
+  Serial.println(status.loop);
   showLoop();
 }
 
@@ -281,6 +297,9 @@ void setVolume()
       }
       dfp.volume(sl);
       lcd.print(sl); // 文字の表示
+      Serial.println("Volume end");    // 文字の表示
+
+      delay(100);
     }
   }
 }
@@ -308,13 +327,11 @@ void setup()
     Serial.println(F("1.Please recheck the connection!"));
     Serial.println(F("2.Please insert the SD card!"));
 
-    lcd.setCursor(0, 1); // カーソルの位置を指定
+    lcd.setCursor(0, 1);         // カーソルの位置を指定
     lcd.print("Insert SD card"); // 文字の表示
     while (true)
       ;
   }
-
-  setVolume();
 
   dfp.setTimeOut(1000);
   totalFolder = dfp.readFolderCounts();
@@ -322,7 +339,7 @@ void setup()
   {
     totalFolder = dfp.readFolderCounts();
     if (totalFolder < 0)
-    {       
+    {
       totalFolder = dfp.readFolderCounts();
       if (totalFolder < 0)
       {
@@ -332,7 +349,7 @@ void setup()
   }
   Serial.print("Total Folder:");
   Serial.println(totalFolder);
-  totalFolder--; //暫定
+  totalFolder--; // 暫定
   for (int i = 0; i < totalFolder; i++)
   {
     totalFile[i] = -1;
@@ -358,6 +375,8 @@ void setup()
 
   showLoop();
 
+  setVolume();
+
   lcd.setCursor(0, 0);
   lcd.print("Play      ");
   playFile();
@@ -366,7 +385,7 @@ void setup()
 void loop()
 {
   // 曲数判定
-  if (totalFile[status.folder - 1] < 0)
+  if (totalFile[status.folder - 1] <= 1)
   {
     int count = dfp.readFileCountsInFolder(status.folder);
     if (count > 0)
@@ -473,7 +492,9 @@ void loop()
     sw3_state = sw3;
     if (sw3 == SWITCH_ON)
     {
-      Serial.println("None");
+      Serial.println("Reset");
+      dfp.begin(Serial1);
+      playFile();
     }
     delay(10);
   }
