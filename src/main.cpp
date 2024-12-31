@@ -296,8 +296,8 @@ void setVolume()
         lcd.print("0");
       }
       dfp.volume(sl);
-      lcd.print(sl); // 文字の表示
-      Serial.println("Volume end");    // 文字の表示
+      lcd.print(sl);                // 文字の表示
+      Serial.println("Volume end"); // 文字の表示
 
       delay(100);
     }
@@ -307,6 +307,7 @@ void setVolume()
 void setup()
 {
   Serial.begin(9600);
+  Serial.println(F("setup"));
 
   lcd.init();      // LCDの初期化
   lcd.backlight(); // LCDバックライトの点灯
@@ -321,35 +322,42 @@ void setup()
   delay(2000); // DFPlayerが使える状態になるまで待つ必要あり
 
   Serial1.begin(9600);
-  if (!dfp.begin(Serial1))
+  int i;
+  lcd.setCursor(0, 1); // カーソルの位置を指定
+  lcd.print("          ");      // 文字の表示
+  lcd.setCursor(0, 1);
+  for (i = 0; i < 10; i++)
   {
+    Serial.println(F("begin"));
+    Serial.println(i);
+    if (dfp.begin(Serial1))
+    {
+      break;
+    }
+    lcd.print("*"); // 文字の表示
+    delay(100);
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
     Serial.println(F("2.Please insert the SD card!"));
-
-    lcd.setCursor(0, 1);         // カーソルの位置を指定
-    lcd.print("Insert SD card"); // 文字の表示
-    while (true)
-      ;
   }
 
   dfp.setTimeOut(1000);
   totalFolder = dfp.readFolderCounts();
-  if (totalFolder < 0) // フォルダの情報が取れるまで何回か繰り返しが必要
+  for (i = 0; i < 10; i++)
   {
+    Serial.println(F("readFolderCounts"));
     totalFolder = dfp.readFolderCounts();
-    if (totalFolder < 0)
+    if (totalFolder > 0)
     {
-      totalFolder = dfp.readFolderCounts();
-      if (totalFolder < 0)
-      {
-        totalFolder = dfp.readFolderCounts();
-      }
+      lcd.clear();
+      break;
     }
+    lcd.print("+"); // 文字の表示
+    delay(100);
   }
   Serial.print("Total Folder:");
   Serial.println(totalFolder);
-  totalFolder--; // 暫定
+  totalFolder--; // 暫定　フォルダが多くカウントされる
   for (int i = 0; i < totalFolder; i++)
   {
     totalFile[i] = -1;
